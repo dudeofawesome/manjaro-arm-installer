@@ -63,7 +63,7 @@ msg() {
     GREEN="${BOLD}\e[1;32m"
       local mesg=$1; shift
       printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
- }
+}
 
 info() {
     ALL_OFF="\e[1;0m"
@@ -71,7 +71,7 @@ info() {
     BLUE="${BOLD}\e[1;34m"
       local mesg=$1; shift
       printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
- }
+}
 
 usage_build_installer() {
     echo "Usage: ${0##*/} [options]"
@@ -81,20 +81,20 @@ usage_build_installer() {
     exit $1
 }
 
-get_timer(){
+get_timer() {
     echo $(date +%s)
 }
 
 # $1: start timer
-elapsed_time(){
+elapsed_time() {
     echo $(echo $1 $(get_timer) | awk '{ printf "%0.2f",($2-$1)/60 }')
 }
 
-show_elapsed_time(){
+show_elapsed_time() {
     msg "Time %s: %s minutes..." "$1" "$(elapsed_time $2)"
 }
 
-getarmprofiles () {
+getarmprofiles() {
     info "Getting package lists ready for $DEVICE $EDITION edition..."
 
     if [ -d "$TMPDIR/arm-profiles/" ];
@@ -214,7 +214,7 @@ create_install() {
     msg "$DEVICE $EDITION install complete"
 }
 
-prepare_card () {
+prepare_card() {
     msg "Getting $SDCARD ready for $DEVICE..."
         # umount SD card
         umount ${SDCARD}${SDDEV}1 1> /dev/null 2>&1
@@ -239,7 +239,7 @@ prepare_card () {
         mount ${SDCARD}${SDDEV}2 $TMPDIR/root
 }
 
-cleanup () {
+cleanup() {
     msg "Writing bootloader and cleaning up after install..."
     # Move boot files
     mv $TMPDIR/root/boot/* $TMPDIR/boot
@@ -299,7 +299,6 @@ if [ -z "$DEVICE" ]; then
             "vim1"      "Khadas Vim 1" \
             3>&1 1>&2 2>&3 3>&-)
 fi
-
 
 #The if statement makes sure that the user has put in something in the previous prompt. If not (left blank or pressed cancel) the script will end
 if [ -z "$EDITION" ]; then
@@ -366,7 +365,6 @@ if [ -z "$FULLNAME" ]; then
     fi
 fi
 
-
 if [ -z "$PASSWORD" ]; then
     if [ ! -z "$FULLNAME" ]; then
         PASSWORD=$(dialog --clear --title "Manjaro ARM Installer" \
@@ -423,10 +421,8 @@ if [ -z "$ROOTPASSWORD" ]; then
     fi
 fi
 
-if [ ! -z "$CONFIRMROOTPASSWORD" ]
-then
-
-# simple command to put the results of lsblk (just the names of the devices) into an array and make that array populate the options
+if [ ! -z "$CONFIRMROOTPASSWORD" ]; then
+    # simple command to put the results of lsblk (just the names of the devices) into an array and make that array populate the options
 	let i=0
 	W=()
 	while read -r line; do
@@ -437,7 +433,7 @@ then
 	--menu "Choose your SDCard - Be sure the correct drive is selected!" 20 50 10 \
 	"${W[@]}" 3>&2 2>&1 1>&3)
 
-# add /dev/ to the selected option above
+    # add /dev/ to the selected option above
 	DEV_NAME=$SDCARD
 	SDCARD=/dev/$SDCARD
 	SDTYP=${SDCARD:5:2}
@@ -506,21 +502,21 @@ else
 fi
 
 if [[ "$EDITION" != "minimal" ]]; then
-if [ ! -z "$CLIKEYMAP" ]; then
-	let i=0
-	W=()
-	while read -r line; do
-		let i=$i+1
-		W+=($line "")
-	done < <( localectl list-x11-keymap-layouts )
-	X11KEYMAP=$(dialog --clear --title "Manjaro ARM Installer" \
-		--menu "Choose your X11 keyboard layout:" 20 50 15 \
-		"${W[@]}" 3>&1 1>&2 2>&3 3>&- \
-	)
-else
-	clear
-	exit 1
-fi
+    if [ ! -z "$CLIKEYMAP" ]; then
+        let i=0
+        W=()
+        while read -r line; do
+            let i=$i+1
+            W+=($line "")
+        done < <( localectl list-x11-keymap-layouts )
+        X11KEYMAP=$(dialog --clear --title "Manjaro ARM Installer" \
+            --menu "Choose your X11 keyboard layout:" 20 50 15 \
+            "${W[@]}" 3>&1 1>&2 2>&3 3>&- \
+        )
+    else
+        clear
+        exit 1
+    fi
 fi
 
 if [ ! -z "$CLIKEYMAP" ]; then
