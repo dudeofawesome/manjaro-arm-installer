@@ -13,6 +13,8 @@ NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
 export DIALOGRC="./dialogrc_gui"
 
 # clearing variables
+BOOT_SIZE=256
+ROOT_FS=ext4
 DEVICE=""
 EDITION=""
 USER=""
@@ -224,7 +226,7 @@ prepare_card() {
         dd if=/dev/zero of=${SDCARD} bs=1M count=32 1> /dev/null 2>&1
         #partition with boot and root
         parted -s $SDCARD mklabel msdos 1> /dev/null 2>&1
-        parted -s $SDCARD mkpart primary fat32 32M 256M 1> /dev/null 2>&1
+        parted -s $SDCARD mkpart primary fat32 32M ${BOOT_SIZE}M 1> /dev/null 2>&1
         START=`cat /sys/block/$DEV_NAME/${DEV_NAME}${SDDEV}1/start`
         SIZE=`cat /sys/block/$DEV_NAME/${DEV_NAME}${SDDEV}1/size`
         END_SECTOR=$(expr $START + $SIZE)
