@@ -214,27 +214,27 @@ create_install() {
 
 prepare_card() {
     msg "Getting $SDCARD ready for $DEVICE..."
-        # umount SD card
-        umount ${SDCARD}${SDDEV}1 1> /dev/null 2>&1
-        umount ${SDCARD}${SDDEV}2 1> /dev/null 2>&1
+    # umount SD card
+    umount ${SDCARD}${SDDEV}1 1> /dev/null 2>&1
+    umount ${SDCARD}${SDDEV}2 1> /dev/null 2>&1
     # Create partitions
-        #Clear first 32mb
-        dd if=/dev/zero of=${SDCARD} bs=1M count=32 1> /dev/null 2>&1
-        #partition with boot and root
-        parted -s $SDCARD mklabel msdos 1> /dev/null 2>&1
-        parted -s $SDCARD mkpart primary fat32 32M ${BOOT_SIZE}M 1> /dev/null 2>&1
-        START=`cat /sys/block/$DEV_NAME/${DEV_NAME}${SDDEV}1/start`
-        SIZE=`cat /sys/block/$DEV_NAME/${DEV_NAME}${SDDEV}1/size`
-        END_SECTOR=$(expr $START + $SIZE)
-        parted -s $SDCARD mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-        partprobe $SDCARD 1> /dev/null 2>&1
-        mkfs.vfat "${SDCARD}${SDDEV}1" -n BOOT_MNJRO 1> /dev/null 2>&1
-        mkfs.ext4 -O ^metadata_csum,^64bit "${SDCARD}${SDDEV}2" -L ROOT_MNJRO 1> /dev/null 2>&1
+    # Clear first 32mb
+    dd if=/dev/zero of=${SDCARD} bs=1M count=32 1> /dev/null 2>&1
+    # partition with boot and root
+    parted -s $SDCARD mklabel msdos 1> /dev/null 2>&1
+    parted -s $SDCARD mkpart primary fat32 32M ${BOOT_SIZE}M 1> /dev/null 2>&1
+    START=`cat /sys/block/$DEV_NAME/${DEV_NAME}${SDDEV}1/start`
+    SIZE=`cat /sys/block/$DEV_NAME/${DEV_NAME}${SDDEV}1/size`
+    END_SECTOR=$(expr $START + $SIZE)
+    parted -s $SDCARD mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+    partprobe $SDCARD 1> /dev/null 2>&1
+    mkfs.vfat "${SDCARD}${SDDEV}1" -n BOOT_MNJRO 1> /dev/null 2>&1
+    mkfs.ext4 -O ^metadata_csum,^64bit "${SDCARD}${SDDEV}2" -L ROOT_MNJRO 1> /dev/null 2>&1
 
-        mkdir -p $TMPDIR/root
-        mkdir -p $TMPDIR/boot
-        mount ${SDCARD}${SDDEV}1 $TMPDIR/boot
-        mount ${SDCARD}${SDDEV}2 $TMPDIR/root
+    mkdir -p $TMPDIR/root
+    mkdir -p $TMPDIR/boot
+    mount ${SDCARD}${SDDEV}1 $TMPDIR/boot
+    mount ${SDCARD}${SDDEV}2 $TMPDIR/root
 }
 
 cleanup() {
@@ -481,7 +481,6 @@ else
     msg "Unrecognized storage device type"
 	exit 1
 fi
-
 
 let i=0
 W=()
