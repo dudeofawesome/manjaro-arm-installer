@@ -89,6 +89,22 @@ usage_build_installer() {
     exit $1
 }
 
+usage() {
+    echo "Usage: $0 [OPTION...]"
+    echo "  -h, --help                    Shows this message"
+    echo "  -f, --root-fs FS              Filesystem of root partition. Defaults to EXT4"
+    echo "  -s, --boot-size SIZE          Size of the boot partition in MB. Defaults to 256"
+    echo "  -d, --device DEVICE           Device"
+    echo "  -e, --edition EDITION         Manjaro ARM edition"
+    echo "  -u, --user USERNAME           Username"
+    echo "  -g, --groups GROUPS           Additional groups for the user"
+    echo "  -n, --name=FULL NAME          Full name of the user"
+    echo "  -p, --password PASSWORD       User password"
+    echo "  -r, --root-password PASSWORD  Root user password"
+    echo "  -t, --tz TIMEZONE             Timezone (eg: America/Los_Angeles)"
+    echo "  -l, --locale LOCALE           Locale (eg: en_US.UTF-8)"
+}
+
 get_timer() {
     echo $(date +%s)
 }
@@ -286,6 +302,46 @@ cleanup() {
         partprobe $SDCARD 1> /dev/null 2>&1
 }
 
+
+args=( )
+
+# replace long arguments
+for arg; do
+    case "$arg" in
+        --help) args+=( -h ) ;;
+        --root-fs) args+=( -f ) ;;
+        --boot-size) args+=( -s ) ;;
+        --device) args+=( -d ) ;;
+        --edition) args+=( -e ) ;;
+        --user) args+=( -u ) ;;
+        --groups) args+=( -g ) ;;
+        --name) args+=( -n ) ;;
+        --password) args+=( -p ) ;;
+        --root-password) args+=( -r ) ;;
+        --tz) args+=( -t ) ;;
+        --locale) args+=( -l ) ;;
+        *) args+=( "$arg" ) ;;
+    esac
+done
+set -- "${args[@]}"
+
+while getopts "hf:s:d:e:u:g:n:p:r:t:l:" OPTION; do
+    : "$OPTION" "$OPTARG"
+    case $OPTION in
+        h) usage; exit 0;;
+        f) ROOT_FS="$OPTARG";;
+        s) BOOT_SIZE="$OPTARG";;
+        d) DEVICE="$OPTARG";;
+        e) EDITION="$OPTARG";;
+        u) USER="$OPTARG";;
+        g) USERGROUPS="$OPTARG";;
+        n) FULLNAME="$OPTARG";;
+        p) PASSWORD="$OPTARG";;
+        r) ROOTPASSWORD="$OPTARG";;
+        t) TIMEZONE="$OPTARG";;
+        l) LOCALE="$OPTARG";;
+    esac
+done
 
 # Using Dialog to ask for user input for variables
 
