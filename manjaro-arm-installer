@@ -75,6 +75,12 @@ info() {
       printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
+warn() {
+    echo $1
+    dialog --clear --title "Manjaro ARM Installer" \
+        --ok-label "$2" --msgbox "$1" 8 50
+}
+
 usage_build_installer() {
     echo "Usage: ${0##*/} [options]"
     echo '    -h                 This help'
@@ -283,7 +289,7 @@ cleanup() {
 
 # Using Dialog to ask for user input for variables
 
-if [ -z "$DEVICE" ]; then
+while [ -z "$DEVICE" ]; do
     DEVICE=$(dialog --clear --title "Manjaro ARM Installer" \
             --menu "Choose a device:" 20 75 10 \
             "rpi4"      "Raspberry Pi 4" \
@@ -300,239 +306,193 @@ if [ -z "$DEVICE" ]; then
             "rpi3"      "Raspberry Pi 3" \
             "vim1"      "Khadas Vim 1" \
             3>&1 1>&2 2>&3 3>&-)
-fi
+done
 
 #The if statement makes sure that the user has put in something in the previous prompt. If not (left blank or pressed cancel) the script will end
-if [ -z "$EDITION" ]; then
-    if [ ! -z "$DEVICE" ]; then
-        EDITION=$(dialog --clear --title "Manjaro ARM Installer" \
-            --menu "Choose an edition:" 20 75 10 \
-            "minimal"   "Minimal Edition            (only CLI)" \
-            "kde-plasma" "Full KDE/Plasma Desktop    (full featured)" \
-            "xfce"      "Full XFCE desktop and apps (full featured)" \
-            "mate"      "Full MATE desktop and apps (lightweight)" \
-            "lxqt"      "Full LXQT Desktop and apps (lightweight)" \
-            "i3"        "Mininal i3 WM with apps    (very light)" \
-            "cubocore"  "QT based Desktop           (lightweight)" \
-            "gnome"     "Full Gnome desktop and apps (EXPERIMANTAL)" \
-            3>&1 1>&2 2>&3 3>&-)
+while [ -z "$EDITION" ]; do
+    EDITION=$(dialog --clear --title "Manjaro ARM Installer" \
+        --menu "Choose an edition:" 20 75 10 \
+        "minimal"   "Minimal Edition            (only CLI)" \
+        "kde-plasma" "Full KDE/Plasma Desktop    (full featured)" \
+        "xfce"      "Full XFCE desktop and apps (full featured)" \
+        "mate"      "Full MATE desktop and apps (lightweight)" \
+        "lxqt"      "Full LXQT Desktop and apps (lightweight)" \
+        "i3"        "Mininal i3 WM with apps    (very light)" \
+        "cubocore"  "QT based Desktop           (lightweight)" \
+        "gnome"     "Full Gnome desktop and apps (EXPERIMANTAL)" \
+        3>&1 1>&2 2>&3 3>&-)
+done
 
-    else
-        clear
-        exit 1
-    fi
-fi
-
-if [ -z "$USER" ]; then
-    if [ ! -z "$EDITION" ]; then
-        USER=$(dialog --clear --title "Manjaro ARM Installer" \
+while [ -z "$USER" ]; do
+    USER=$(dialog --clear --title "Manjaro ARM Installer" \
         --inputbox "Enter username:
     (usernames most be all lowercase)" 8 50 \
         3>&1 1>&2 2>&3 3>&-)
-        if [[ "$USER" =~ [A-Z] ]] || [[ "$USER" == *['!'@#\$%^\&*()_+]* ]]; then
-        clear
-        msg "Configuration aborted! Username contained invalid characters."
-        exit 1
-        fi
-    else
-        clear
-        exit 1
+    if ! [[ "$USER" =~ ^[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}\$)$ ]]; then
+        warn "Username contained invalid characters." "Retry"
+        USER=""
+        sleep 2
     fi
-fi
+done
 
 if [ -z "$USERGROUPS" ]; then
-    if [ ! -z "$USER" ]
-    then
     USERGROUPS=$(dialog --clear --title "Manjaro ARM Installer" \
         --inputbox "Enter additional groups for $USER in a comma seperated list: (empty if none)
     (default: wheel,sys,audio,input,video,storage,lp,network,users,power)" 8 90 \
             3>&1 1>&2 2>&3 3>&- \
         )
-    else
-        clear
-        exit 1
-    fi
 fi
 
-if [ -z "$FULLNAME" ]; then
-    if [ ! -z "$USER" ]
-    then
+while [ -z "$FULLNAME" ]; do
     FULLNAME=$(dialog --clear --title "Manjaro ARM Installer" \
-        --inputbox "Enter Full Name for $USER:" 8 50 \
-            3>&1 1>&2 2>&3 3>&- \
-        )
-    else
-        clear
-        exit 1
-    fi
-fi
+    --inputbox "Enter Full Name for $USER:" 8 50 \
+        3>&1 1>&2 2>&3 3>&- \
+    )
+done
 
 if [ -z "$PASSWORD" ]; then
-    if [ ! -z "$FULLNAME" ]; then
+    CONFIRMPASSWORD="not null"
+    while [[ "$PASSWORD" != "$CONFIRMPASSWORD" ]]; do
         PASSWORD=$(dialog --clear --title "Manjaro ARM Installer" \
         --insecure --passwordbox "Enter Password for $USER:" 8 50 \
         3>&1 1>&2 2>&3 3>&- \
         )
-    else
-        clear
-        exit 1
-    fi
+        # if [ -z "$PASSWORD" ]; then
+        #     msg "Password cannot be empty!"
+        #     continue
+        # fi
 
-    if [ ! -z "$PASSWORD" ]; then
         CONFIRMPASSWORD=$(dialog --clear --title "Manjaro ARM Installer" \
         --insecure --passwordbox "Confirm Password for $USER:" 8 50 \
         3>&1 1>&2 2>&3 3>&- \
         )
-    else
-        clear
-        exit 1
-    fi
 
-    if [[ "$PASSWORD" != "$CONFIRMPASSWORD" ]]; then
-        clear
-        msg "User passwords do not match! Please restart the installer and try again."
-        exit 1
-    fi
+        if [[ "$PASSWORD" != "$CONFIRMPASSWORD" ]]; then
+            warn "User passwords do not match!" "Retry"
+            PASSWORD=""
+            CONFIRMPASSWORD="not null"
+            # sleep 2
+        fi
+    done
 fi
 
 if [ -z "$ROOTPASSWORD" ]; then
-    if [ ! -z "$CONFIRMPASSWORD" ]; then
+    CONFIRMROOTPASSWORD="not null"
+    while [[ "$ROOTPASSWORD" != "$CONFIRMROOTPASSWORD" ]]; do
         ROOTPASSWORD=$(dialog --clear --title "Manjaro ARM Installer" \
         --insecure --passwordbox "Enter Root Password:" 8 50 \
         3>&1 1>&2 2>&3 3>&- \
         )
-    else
-        clear
-        exit 1
-    fi
+        # if [ -z "$ROOTPASSWORD" ]; then
+        #     msg "Password cannot be empty!"
+        #     continue
+        # fi
 
-    if [ ! -z "$ROOTPASSWORD" ]; then
         CONFIRMROOTPASSWORD=$(dialog --clear --title "Manjaro ARM Installer" \
         --insecure --passwordbox "Confirm Root Password:" 8 50 \
         3>&1 1>&2 2>&3 3>&- \
         )
-    else
-        clear
-        exit 1
-    fi
 
-    if [[ "$ROOTPASSWORD" != "$CONFIRMROOTPASSWORD" ]]; then
-        clear
-        msg "Root passwords do not match! Please restart the installer and try again."
-        exit 1
-    fi
+        if [[ "$ROOTPASSWORD" != "$CONFIRMROOTPASSWORD" ]]; then
+            warn "Root passwords do not match!" "Retry"
+            ROOTPASSWORD=""
+            CONFIRMROOTPASSWORD="not null"
+            # sleep 2
+        fi
+    done
 fi
 
-if [ ! -z "$CONFIRMROOTPASSWORD" ]; then
-    # simple command to put the results of lsblk (just the names of the devices) into an array and make that array populate the options
-	let i=0
-	W=()
-	while read -r line; do
-		let i=$i+1
-		W+=($line "")
-	done < <( lsblk -dn -o NAME )
-	SDCARD=$(dialog --title "Manjaro ARM Installer" \
-	--menu "Choose your SDCard - Be sure the correct drive is selected!" 20 50 10 \
-	"${W[@]}" 3>&2 2>&1 1>&3)
+# simple command to put the results of lsblk (just the names of the devices)
+# sinto an array and make that array populate the options
+let i=0
+W=()
+while read -r line; do
+    let i=$i+1
+    W+=($line "")
+done < <( lsblk -dn -o NAME )
+while [ -z "$SDCARD" ]; do
+    SDCARD=$(dialog --title "Manjaro ARM Installer" \
+    --menu "Choose your SDCard - Be sure the correct drive is selected!" 20 50 10 \
+    "${W[@]}" 3>&2 2>&1 1>&3)
+done
 
-    # add /dev/ to the selected option above
-	DEV_NAME=$SDCARD
-	SDCARD=/dev/$SDCARD
-	SDTYP=${SDCARD:5:2}
-else
-	clear
-	exit 1
-fi
+# add /dev/ to the selected option above
+DEV_NAME=$SDCARD
+SDCARD=/dev/$SDCARD
+SDTYP=${SDCARD:5:2}
 
 if [[ "$SDTYP" = "sd" ]]; then
 	SDDEV=""
 elif [[ "$SDTYP" = "mm" ]]; then
 	SDDEV="p"
 else
-	clear
+    msg "Unrecognized storage device type"
 	exit 1
 fi
 
 
-if [ ! -z "$SDCARD" ]; then
-	let i=0
-	W=()
-	while read -r line; do
-		let i=$i+1
-		W+=($line "")
-	done < <( timedatectl list-timezones )
-	TIMEZONE=$(dialog --clear --title "Manjaro ARM Installer" \
-	--menu "Choose your timezone!" 20 50 15 \
-	"${W[@]}" 3>&1 1>&2 2>&3 3>&- \
-	)
-else
-	clear
-	exit 1
-fi
+let i=0
+W=()
+while read -r line; do
+    let i=$i+1
+    W+=($line "")
+done < <( timedatectl list-timezones )
+while [ -z "$TIMEZONE" ]; do
+    TIMEZONE=$(dialog --clear --title "Manjaro ARM Installer" \
+    --menu "Choose your timezone!" 20 50 15 \
+    "${W[@]}" 3>&1 1>&2 2>&3 3>&- \
+    )
+done
 
-
-if [ ! -z "$TIMEZONE" ]; then
-	let i=0
-	W=()
-	while read -r line; do
-		let i=$i+1
-		W+=($line "")
-	done < <( cat /etc/locale.gen | grep "UTF-8" | tail -n +2 | sed -e 's/^#*//' | awk '{print $1}' )
+let i=0
+W=()
+while read -r line; do
+    let i=$i+1
+    W+=($line "")
+done < <( cat /etc/locale.gen | grep "UTF-8" | tail -n +2 | sed -e 's/^#*//' | awk '{print $1}' )
+while [ -z "$LOCALE" ]; do
 	LOCALE=$(dialog --clear --title "Manjaro ARM Installer" \
 		--menu "Choose your locale!" 20 50 15 \
 		"${W[@]}" 3>&1 1>&2 2>&3 3>&- \
 		)
-else
-	clear
-	exit 1
-fi
+done
 
-if [ ! -z "$LOCALE" ]; then
-	let i=0
-	W=()
-	while read -r line; do
-		let i=$i+1
-		W+=($line "")
-	done < <( localectl list-keymaps )
+let i=0
+W=()
+while read -r line; do
+    let i=$i+1
+    W+=($line "")
+done < <( localectl list-keymaps )
+while [ -z "$CLIKEYMAP" ]; do
 	CLIKEYMAP=$(dialog --clear --title "Manjaro ARM Installer" \
 		--menu "Choose your TTY keyboard layout:" 20 50 15 \
 		"${W[@]}" 3>&1 1>&2 2>&3 3>&- \
 	)
-else
-	clear
-	exit 1
-fi
+done
 
 if [[ "$EDITION" != "minimal" ]]; then
-    if [ ! -z "$CLIKEYMAP" ]; then
-        let i=0
-        W=()
-        while read -r line; do
-            let i=$i+1
-            W+=($line "")
-        done < <( localectl list-x11-keymap-layouts )
+    let i=0
+    W=()
+    while read -r line; do
+        let i=$i+1
+        W+=($line "")
+    done < <( localectl list-x11-keymap-layouts )
+    while [ -z "$X11KEYMAP" ]; do
         X11KEYMAP=$(dialog --clear --title "Manjaro ARM Installer" \
             --menu "Choose your X11 keyboard layout:" 20 50 15 \
             "${W[@]}" 3>&1 1>&2 2>&3 3>&- \
         )
-    else
-        clear
-        exit 1
-    fi
+    done
 fi
 
-if [ ! -z "$CLIKEYMAP" ]; then
+while [ -z "$HOSTNAME" ]; do
 	HOSTNAME=$(dialog --clear --title "Manjaro ARM Installer" \
 	--inputbox "Enter desired hostname for this system:" 8 50 \
 	3>&1 1>&2 2>&3 3>&- \
 	)
-else
-	clear
-	exit 1
-fi
+done
 
-if [ ! -z "$HOSTNAME" ]; then
-	dialog --clear --title "Manjaro ARM Installer" \
+dialog --clear --title "Manjaro ARM Installer" \
     --yesno "Is the below information correct:
     Device = $DEVICE
     Edition = $EDITION
@@ -547,10 +507,8 @@ if [ ! -z "$HOSTNAME" ]; then
     X11 Keyboard layout = $X11KEYMAP
     Hostname = $HOSTNAME" 20 70 \
     3>&1 1>&2 2>&3 3>&-
-else
-	clear
-	exit 1
-fi
+
+exit 0
 
 response=$?
 case $response in
