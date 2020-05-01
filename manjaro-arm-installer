@@ -32,32 +32,6 @@ TIMEZONE=""
 LOCALE=""
 HOSTNAME=""
 
-# check if root
-if [ "$EUID" -ne 0 ]; then
-    echo "*******************************************************************************************"
-    echo "*                                                                                         *"
-    echo "*     This script requires root permissions to run. Please run as root or with sudo!      *"
-    echo "*                                                                                         *"
-    echo "*******************************************************************************************"
-  exit
-fi
-
-# Sanity checks for dependencies
-declare -a DEPENDENCIES=("git" "parted" "systemd-nspawn" "wget" "dialog" "bsdtar" "openssl" "awk")
-
-for i in "${DEPENDENCIES[@]}"; do
-  if ! [[ -f "/bin/$i" || -f "/sbin/$i" || -f "/usr/bin/$i" || -f "/usr/sbin/$i" ]] ; then
-    echo "$i command is missing! Please install the relevant package."
-    exit 1
-  fi
-done
-
-if [ ! -f "/usr/lib/binfmt.d/qemu-static.conf" ]; then
-    echo "qemu-static.conf file is missing. Please install the relevant package."
-    exit 1
-fi
-
-
 # Functions
 msg() {
     ALL_OFF="\e[1;0m"
@@ -342,6 +316,28 @@ while getopts "hf:s:d:e:u:g:n:p:r:t:l:" OPTION; do
         l) LOCALE="$OPTARG";;
     esac
 done
+
+# check if root
+if [ "$EUID" -ne 0 ]; then
+    echo "This script requires root permissions to run."
+    echo "Please run with sudo or as root!"
+    exit 1
+fi
+
+# Sanity checks for dependencies
+declare -a DEPENDENCIES=("git" "parted" "systemd-nspawn" "wget" "dialog" "bsdtar" "openssl" "awk")
+
+for i in "${DEPENDENCIES[@]}"; do
+  if ! [[ -f "/bin/$i" || -f "/sbin/$i" || -f "/usr/bin/$i" || -f "/usr/sbin/$i" ]] ; then
+    echo "$i command is missing! Please install the relevant package."
+    exit 1
+  fi
+done
+
+if [ ! -f "/usr/lib/binfmt.d/qemu-static.conf" ]; then
+    echo "qemu-static.conf file is missing. Please install the relevant package."
+    exit 1
+fi
 
 # Using Dialog to ask for user input for variables
 
