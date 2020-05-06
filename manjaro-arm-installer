@@ -218,8 +218,7 @@ create_install() {
 prepare_card() {
     msg "Getting $SDCARD ready for $DEVICE..."
     # umount SD card
-    umount ${SDCARD}${SDDEV}1 1> /dev/null 2>&1
-    umount ${SDCARD}${SDDEV}2 1> /dev/null 2>&1
+    umount ${SDCARD}${SDDEV}?* 1> /dev/null 2>&1
     # Create partitions
     # Clear first 32mb
     dd if=/dev/zero of=${SDCARD} bs=1M count=32 1> /dev/null 2>&1
