@@ -67,16 +67,19 @@ usage() {
     echo "Usage: $0 [OPTION...]"
     echo "  -h, --help                    Shows this message"
     echo "  -f, --root-fs FS              Filesystem of root partition. Defaults to EXT4"
-    echo "  -s, --boot-size SIZE          Size of the boot partition in MB. Defaults to 256"
-    echo "  -d, --device DEVICE           Device"
-    echo "  -e, --edition EDITION         Manjaro ARM edition"
+    echo "  -b, --boot-size SIZE          Size of the boot partition in MB. Defaults to 256"
+    echo "  -s, --storage STORAGE         Block device to install to (eg: sdc)"
+    echo "  -d, --device DEVICE           Device type (eg: rpi4)"
+    echo "  -e, --edition EDITION         Manjaro ARM edition (eg: minimal)"
     echo "  -u, --user USERNAME           Username"
     echo "  -g, --groups GROUPS           Additional groups for the user"
     echo "  -n, --name=FULL NAME          Full name of the user"
+    echo "  -o, --hostname HOSTNAME       Hostname for the system"
     echo "  -p, --password PASSWORD       User password"
     echo "  -r, --root-password PASSWORD  Root user password"
     echo "  -t, --tz TIMEZONE             Timezone (eg: America/Los_Angeles)"
     echo "  -l, --locale LOCALE           Locale (eg: en_US.UTF-8)"
+    echo "  -k, --keymap KEYMAP           CLI Keymap (eg: us)"
 }
 
 get_timer() {
@@ -311,36 +314,42 @@ for arg; do
     case "$arg" in
         --help) args+=( -h ) ;;
         --root-fs) args+=( -f ) ;;
-        --boot-size) args+=( -s ) ;;
+        --boot-size) args+=( -b ) ;;
+        --storage) args+=( -s ) ;;
         --device) args+=( -d ) ;;
         --edition) args+=( -e ) ;;
         --user) args+=( -u ) ;;
         --groups) args+=( -g ) ;;
         --name) args+=( -n ) ;;
+        --hostname) args+=( -o ) ;;
         --password) args+=( -p ) ;;
         --root-password) args+=( -r ) ;;
         --tz) args+=( -t ) ;;
         --locale) args+=( -l ) ;;
+        --keymap) args+=( -k ) ;;
         *) args+=( "$arg" ) ;;
     esac
 done
 set -- "${args[@]}"
 
-while getopts "hf:s:d:e:u:g:n:p:r:t:l:" OPTION; do
+while getopts "hf:b:s:d:e:u:g:n:o:p:r:t:l:k:" OPTION; do
     : "$OPTION" "$OPTARG"
     case $OPTION in
         h) usage; exit 0;;
         f) ROOT_FS="$OPTARG";;
-        s) BOOT_SIZE="$OPTARG";;
+        b) BOOT_SIZE="$OPTARG";;
+        s) SDCARD="$OPTARG";;
         d) DEVICE="$OPTARG";;
         e) EDITION="$OPTARG";;
         u) USER="$OPTARG";;
         g) USERGROUPS="$OPTARG";;
         n) FULLNAME="$OPTARG";;
+        o) HOSTNAME="$OPTARG";;
         p) PASSWORD="$OPTARG";;
         r) ROOTPASSWORD="$OPTARG";;
         t) TIMEZONE="$OPTARG";;
         l) LOCALE="$OPTARG";;
+        k) CLIKEYMAP="$OPTARG";;
     esac
 done
 
