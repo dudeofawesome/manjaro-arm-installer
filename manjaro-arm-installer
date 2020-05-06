@@ -377,7 +377,8 @@ fi
 
 # Using Dialog to ask for user input for variables
 
-while [ -z "$DEVICE" ]; do
+supported_devices='^(rpi4|pbpro|pinebook|rock64|rockpro64|pine64|pine64|oc2|on2|vim3|rockpi4|rpi3|vim1)$'
+while ! [[ "$DEVICE" =~ $supported_devices ]]; do
     DEVICE=$(dialog --clear --title "Manjaro ARM Installer" \
             --menu "Choose a device:" 20 75 10 \
             "rpi4"      "Raspberry Pi 4" \
@@ -396,8 +397,8 @@ while [ -z "$DEVICE" ]; do
             3>&1 1>&2 2>&3 3>&-)
 done
 
-#The if statement makes sure that the user has put in something in the previous prompt. If not (left blank or pressed cancel) the script will end
-while [ -z "$EDITION" ]; do
+supported_editions='^(minimal|kde|xfce|mate|lxqt|i3|cubocore|gnome)$'
+while ! [[ "$EDITION" =~ $supported_editions ]]; do
     EDITION=$(dialog --clear --title "Manjaro ARM Installer" \
         --menu "Choose an edition:" 20 75 10 \
         "minimal"   "Minimal Edition            (only CLI)" \
@@ -494,11 +495,14 @@ fi
 # sinto an array and make that array populate the options
 let i=0
 W=()
+block_devs='^('
 while read -r line; do
     let i=$i+1
     W+=($line "")
+    block_devs+="$line|"
 done < <( lsblk -dn -o NAME )
-while [ -z "$SDCARD" ]; do
+block_devs="${block_devs::-1})$"
+while ! [[ "$SDCARD" =~ $block_devs ]]; do
     SDCARD=$(dialog --title "Manjaro ARM Installer" \
     --menu "Choose your SDCard - Be sure the correct drive is selected!" 20 50 10 \
     "${W[@]}" 3>&2 2>&1 1>&3)
@@ -520,11 +524,14 @@ fi
 
 let i=0
 W=()
+timezones='^('
 while read -r line; do
     let i=$i+1
     W+=($line "")
+    timezones+="$line|"
 done < <( timedatectl list-timezones )
-while [ -z "$TIMEZONE" ]; do
+timezones="${timezones::-1})$"
+while ! [[ "$TIMEZONE" =~ $timezones ]]; do
     TIMEZONE=$(dialog --clear --title "Manjaro ARM Installer" \
     --menu "Choose your timezone!" 20 50 15 \
     "${W[@]}" 3>&1 1>&2 2>&3 3>&- \
@@ -533,11 +540,14 @@ done
 
 let i=0
 W=()
+locales='^('
 while read -r line; do
     let i=$i+1
     W+=($line "")
+    locales+="$line|"
 done < <( cat /etc/locale.gen | grep "UTF-8" | tail -n +2 | sed -e 's/^#*//' | awk '{print $1}' )
-while [ -z "$LOCALE" ]; do
+locales="${locales::-1})$"
+while ! [[ "$LOCALE" =~ $locales ]]; do
 	LOCALE=$(dialog --clear --title "Manjaro ARM Installer" \
 		--menu "Choose your locale!" 20 50 15 \
 		"${W[@]}" 3>&1 1>&2 2>&3 3>&- \
@@ -546,11 +556,14 @@ done
 
 let i=0
 W=()
+keymaps='^('
 while read -r line; do
     let i=$i+1
     W+=($line "")
+    keymaps+="$line|"
 done < <( localectl list-keymaps )
-while [ -z "$CLIKEYMAP" ]; do
+keymaps="${keymap::-1})$"
+while ! [[ "$CLIKEYMAP" =~ $keymap ]]; do
 	CLIKEYMAP=$(dialog --clear --title "Manjaro ARM Installer" \
 		--menu "Choose your TTY keyboard layout:" 20 50 15 \
 		"${W[@]}" 3>&1 1>&2 2>&3 3>&- \
